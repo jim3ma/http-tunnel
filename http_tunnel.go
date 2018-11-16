@@ -23,9 +23,10 @@ type HttpTunnel struct {
 	Phase1Path string
 	Phase2Path string
 	HttpClient *http.Client
+	Userinfo   *url.Userinfo
 }
 
-func NewTunnel(schema, address, port string, phase1, phase2 string) *HttpTunnel {
+func NewTunnel(schema, address, port string, phase1, phase2 string, user *url.Userinfo) *HttpTunnel {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -40,6 +41,7 @@ func NewTunnel(schema, address, port string, phase1, phase2 string) *HttpTunnel 
 		Phase1Path: phase1,
 		Phase2Path: phase2,
 		HttpClient: httpClient,
+		Userinfo:   user,
 	}
 }
 
@@ -73,6 +75,9 @@ func (h *HttpTunnel) upstream() string {
 
 func (h *HttpTunnel) phase1(uid, addr string) (io.ReadCloser, error) {
 	u, _ := url.Parse(h.upstream() + h.Phase1Path)
+	if h.Userinfo != nil {
+		u.User = h.Userinfo
+	}
 	req := &http.Request{
 		Method:           "POST",
 		ProtoMajor:       1,
@@ -94,6 +99,9 @@ func (h *HttpTunnel) phase1(uid, addr string) (io.ReadCloser, error) {
 func (h *HttpTunnel) phase2(uid string) io.WriteCloser {
 	r, w := io.Pipe()
 	u, _ := url.Parse(h.upstream() + h.Phase2Path)
+	if h.Userinfo != nil {
+		u.User = h.Userinfo
+	}
 	req := &http.Request{
 		Method:           "POST",
 		ProtoMajor:       1,

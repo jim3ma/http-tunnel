@@ -15,6 +15,8 @@ var (
 	phase1Url = flag.String("phase1-path", "/ping", "Phase 1 URL path")
 	phase2Url = flag.String("phase2-path", "/pong", "Phase 2 URL path, must different with Phase 1 URL path")
 	listen    = flag.String("listen", ":10080", "Listen Address")
+	authUser  = flag.String("auth-username", "default", "Auth Username")
+	authPass  = flag.String("auth-password", "default-pass", "Auth Password")
 )
 
 func registerProfileHandler(mux *http.ServeMux) {
@@ -23,6 +25,21 @@ func registerProfileHandler(mux *http.ServeMux) {
 	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+}
+
+func auth(fn http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, pass, _ := r.BasicAuth()
+		if !check(user, pass) {
+			http.Error(w, "Unauthorized.", 401)
+			return
+		}
+		fn(w, r)
+	}
+}
+
+func check(user, pass string) bool {
+	return user == *authUser && pass == *authPass
 }
 
 func upload(w http.ResponseWriter, r *http.Request) {
@@ -60,10 +77,10 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(*phase1Url, ht.Phase1Handler)
-	mux.HandleFunc(*phase2Url, ht.Phase2Handler)
+	mux.HandleFunc(*phase1Url, auth(ht.Phase1Handler))
+	mux.HandleFunc(*phase2Url, auth(ht.Phase2Handler))
 
-	mux.HandleFunc("/upload", upload)
+	mux.HandleFunc("/upload", auth(upload))
 
 	// Register pprof handlers
 	registerProfileHandler(mux)
