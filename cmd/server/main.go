@@ -20,17 +20,18 @@ var (
 )
 
 func registerProfileHandler(mux *http.ServeMux) {
-	mux.HandleFunc("/debug/pprof/", pprof.Index)
-	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	mux.HandleFunc("/debug/pprof/", auth(pprof.Index))
+	//mux.HandleFunc("/debug/pprof/cmdline", auth(pprof.Cmdline))
+	mux.HandleFunc("/debug/pprof/profile", auth(pprof.Profile))
+	mux.HandleFunc("/debug/pprof/symbol", auth(pprof.Symbol))
+	mux.HandleFunc("/debug/pprof/trace", auth(pprof.Trace))
 }
 
 func auth(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, pass, _ := r.BasicAuth()
 		if !check(user, pass) {
+			w.Header().Set("WWW-Authenticate", `Basic realm="please enter credential"`)
 			http.Error(w, "Unauthorized.", 401)
 			return
 		}

@@ -53,7 +53,7 @@ func (h *HttpTunnel) Dial(network, addr string) (net.Conn, error) {
 	}
 
 	uid, _ := uuid.NewV4()
-	log.Printf("uid: %s\n", uid.String())
+	//log.Printf("uid: %s\n", uid.String())
 	id := uid.String()
 
 	r, err := h.phase1(id, addr)
