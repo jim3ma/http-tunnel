@@ -1,19 +1,19 @@
 package ht
 
 import (
-	"crypto/tls"
-	"net"
-	"errors"
-	"time"
-	"net/http"
 	"bytes"
+	"crypto/tls"
+	"errors"
 	"io"
+	"io/ioutil"
 	"log"
+	"net"
+	"net/http"
 	"net/url"
 	"sync"
-	"io/ioutil"
+	"time"
 
-	"github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 type HttpTunnel struct {
@@ -52,7 +52,7 @@ func (h *HttpTunnel) Dial(network, addr string) (net.Conn, error) {
 		return nil, errors.New("proxy: no support for http tunnel proxy connections of type " + network)
 	}
 
-	uid, _ := uuid.NewV4()
+	uid := uuid.New()
 	//log.Printf("uid: %s\n", uid.String())
 	id := uid.String()
 
